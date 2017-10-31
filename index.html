@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+</style>
+<body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+    const API_KEY = 'zxgz9adHpHpMqDxWNJpW';
+    const margin = {top: 50, right: 10, bottom: 30, left: 80};
+    const width = 960 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+    const format = d3.timeFormat('%Y-%m-%d');
+    // Domain for month scale
+    const now = new Date();
+    const beforeYear = d3.timeYear.offset(now, -1);
+    const beforeWeek = d3.timeDay.offset(now, -7);
+    // set the ranges
+    const x = d3.scaleTime().domain([beforeYear, now]).range([0, width]);
+    const y = d3.scaleTime().domain([beforeWeek, now]).range([height, 0]);
+    // Append svg
+    const svg = d3.select('body')
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+    // Add the X Axis
+    svg.append('g').attr('transform', `translate(0, ${height})`).call(d3.axisBottom(x));
+    // Add the Y Axis
+    svg.append('g').call(d3.axisLeft(y).ticks(d3.timeDay.every(1)).tickFormat(d3.timeFormat('%A')));
+
+    d3.request(`https://www.quandl.com/api/v3/datasets/ECB/EURRUB/data.json?api_key=${API_KEY}&start_date=${format(beforeYear)}`, (error, response) => {
+        if (error || !response || !response.responseText) return;
+
+        const rates = JSON.parse(response.responseText)['dataset_data']['data'];
+
+        console.log('response', rates);
+
+        svg.selectAll('.cell')
+            .data(rates)
+            .enter()
+            .append('rect')
+            .attr('x', item => x(new Date(item[0])))
+            .attr('y', item => y(new Date(item[0])))
+            .attr('width', function (d) { return 5; })
+            .attr('height', function (d) { return 5; })
+    });
+
+
+</script>
